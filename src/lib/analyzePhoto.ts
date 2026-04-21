@@ -267,7 +267,7 @@ export const callAnalysisWebhook = async (
 ): Promise<AnalysisUIState> => {
   try {
     const response = await fetch(
-      'https://kidan8n.app.n8n.cloud/webhook-test/shelf-analysis',
+      'https://taxautomation.app.n8n.cloud/webhook/shelf-analysis',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
