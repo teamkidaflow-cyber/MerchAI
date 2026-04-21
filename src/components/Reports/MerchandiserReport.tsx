@@ -20,7 +20,6 @@ const MerchandiserReport: React.FC<MerchandiserReportProps> = ({
   const [expandedShelves, setExpandedShelves] = useState<Set<number>>(new Set());
 
   const mr       = analysis?.merchandiser_report ?? analysis?.manager_report;
-  const d        = analysis?.detailed_analysis ?? mr?.detailed_analysis;
   const summary  = analysis?.overall_summary;
   const confidence = analysis?.confidence ?? 0;
   const edgeCase   = analysis?.edge_case;
