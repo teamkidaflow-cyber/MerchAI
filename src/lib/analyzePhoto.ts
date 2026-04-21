@@ -183,22 +183,34 @@ export const parseWebhookResponse = (raw: any): any => {
   let analysis = raw;
 
   try {
-    // Array envelope: [{data:[{output:[{content:[{text:"...json..."}]}]}]}]
     if (Array.isArray(raw)) {
-      // Old format: data[0].output[0].content[0].text
-      const textOld = raw[0]?.data?.[0]?.output?.[0]?.content?.[0]?.text;
-      // New format: data[0].content.parts[0].text
-      const textNew = raw[0]?.data?.[0]?.content?.parts?.[0]?.text;
-      const text = textOld ?? textNew;
+      const d0 = raw[0]?.data?.[0];
+      const text =
+        // format A: data[0].output[0].content[0].text
+        raw[0]?.data?.[0]?.output?.[0]?.content?.[0]?.text ??
+        // format B: data[0].content.parts[0].text  (Google Gemini envelope)
+        d0?.content?.parts?.[0]?.text ??
+        // format C: data[0].content[0].text  (content is array)
+        (Array.isArray(d0?.content) ? d0.content.find((c: any) => c.type === 'text' || typeof c.text === 'string')?.text : undefined) ??
+        // format D: data[0].text
+        d0?.text ??
+        // format E: data[0].output  (plain string)
+        (typeof d0?.output === 'string' ? d0.output : undefined) ??
+        // format F: raw[0] itself is a string
+        (typeof raw[0] === 'string' ? raw[0] : undefined);
+
       if (typeof text === 'string') {
-        // Strip markdown code fences if present
         const cleaned = text.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
         analysis = JSON.parse(cleaned);
+      } else if (d0 && typeof d0 === 'object' && ('success' in d0 || 'merchandiser_report' in d0)) {
+        // format G: data[0] is already the parsed object
+        analysis = d0;
       }
     }
     // Direct object with text field
     else if (typeof raw?.text === 'string') {
-      analysis = JSON.parse(raw.text);
+      const cleaned = raw.text.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+      analysis = JSON.parse(cleaned);
     }
     // Already a plain object — use as-is
   } catch {
